@@ -65,6 +65,7 @@
     <!-- 体組成入力ボタン -->
     <v-btn
       block
+      size="x-large"
       variant="outlined"
       color="secondary"
       class="mb-3"
