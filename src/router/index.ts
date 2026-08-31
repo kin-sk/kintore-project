@@ -38,7 +38,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const { isAuthenticated, loading } = useAuth()
 
   // ローディング中は待機
