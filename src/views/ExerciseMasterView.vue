@@ -93,8 +93,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/composables/useAuth'
 import type { ExerciseMaster } from '@/types'
 import { PARTS, EQUIPMENTS } from '@/types'
+
+const { user } = useAuth()
 
 const exercises = ref<ExerciseMaster[]>([])
 const filterPart = ref('すべて')
@@ -124,7 +127,12 @@ function openEditDialog(ex: ExerciseMaster) {
 }
 
 async function loadExercises() {
-  const { data } = await supabase.from('exercise_masters').select('*').order('part').order('name')
+  const { data } = await supabase
+    .from('exercise_masters')
+    .select('*')
+    .eq('user_id', user.value!.id)
+    .order('part')
+    .order('name')
   exercises.value = (data as ExerciseMaster[]) ?? []
 }
 
@@ -132,7 +140,10 @@ async function saveExercise() {
   if (editingId.value) {
     await supabase.from('exercise_masters').update(form.value).eq('id', editingId.value)
   } else {
-    await supabase.from('exercise_masters').insert(form.value)
+    await supabase.from('exercise_masters').insert({
+      ...form.value,
+      user_id: user.value!.id
+    })
   }
   dialog.value = false
   await loadExercises()

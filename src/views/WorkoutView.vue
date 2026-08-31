@@ -142,8 +142,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/composables/useAuth'
 import type { ExerciseMaster, WorkoutLog } from '@/types'
 import { PARTS, EQUIPMENTS } from '@/types'
+
+const { user } = useAuth()
 
 const exercises = ref<ExerciseMaster[]>([])
 const selectedExercise = ref<ExerciseMaster | null>(null)
@@ -288,6 +291,7 @@ watch(selectedExercise, async (ex) => {
   const { data } = await supabase
     .from('workout_logs')
     .select('*')
+    .eq('user_id', user.value!.id)
     .eq('exercise_id', ex.id)
     .lt('date', today)
     .order('date', { ascending: false })
@@ -298,7 +302,11 @@ watch(selectedExercise, async (ex) => {
 })
 
 async function loadExercises() {
-  const { data } = await supabase.from('exercise_masters').select('*').order('name')
+  const { data } = await supabase
+    .from('exercise_masters')
+    .select('*')
+    .eq('user_id', user.value!.id)
+    .order('name')
   exercises.value = data ?? []
 }
 
@@ -307,6 +315,7 @@ async function loadTodaySets() {
   const { data } = await supabase
     .from('workout_logs')
     .select('*, exercise:exercise_masters(name)')
+    .eq('user_id', user.value!.id)
     .eq('date', today)
     .order('set_number')
   todaySets.value = (data as WorkoutLog[]) ?? []
@@ -317,6 +326,7 @@ async function addSet() {
   const today = new Date().toISOString().split('T')[0]
   const nextSet = todaySets.value.filter((s) => s.exercise_id === selectedExercise.value!.id).length + 1
   await supabase.from('workout_logs').insert({
+    user_id: user.value!.id,
     date: today,
     exercise_id: selectedExercise.value.id,
     weight: inputWeight.value,

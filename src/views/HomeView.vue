@@ -257,7 +257,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/composables/useAuth";
 import type { BodyComposition, WorkoutLog } from "@/types";
+
+const { user } = useAuth();
 
 const today = new Date();
 // これをブラウザのJavaScriptで実行すると、UTC（協定世界時）の深夜0時として解釈されます。
@@ -375,10 +378,11 @@ async function loadWorkoutDates() {
   const { data } = await supabase
     .from("workout_logs")
     .select("date")
+    .eq("user_id", user.value!.id)
     .gte("date", startDate)
     .lte("date", endDate);
   if (data) {
-    workoutDates.value = new Set(data.map((r) => new Date(r.date).getDate()));
+    workoutDates.value = new Set(data.map((r) => Number(r.date.split("-")[2])));
   }
 }
 
@@ -392,6 +396,7 @@ async function loadTodayBody() {
   const { data } = await supabase
     .from("body_compositions")
     .select("*")
+    .eq("user_id", user.value!.id)
     .eq("date", todayStr)
     .maybeSingle();
   todayBody.value = data;
@@ -406,12 +411,14 @@ async function handleDayClick(day: number) {
     supabase
       .from("workout_logs")
       .select("*, exercise:exercise_masters(*)")
+      .eq("user_id", user.value!.id)
       .eq("date", dateStr)
       .order("exercise_id")
       .order("set_number"),
     supabase
       .from("body_compositions")
       .select("*")
+      .eq("user_id", user.value!.id)
       .eq("date", dateStr)
       .maybeSingle(),
   ]);
@@ -425,11 +432,12 @@ async function saveBodyComposition() {
   const todayStr = today.toISOString().split("T")[0];
   await supabase.from("body_compositions").upsert(
     {
+      user_id: user.value!.id,
       date: todayStr,
       weight: inputWeight.value,
       body_fat_percentage: inputBodyFat.value ?? null,
     },
-    { onConflict: "date" },
+    { onConflict: "date,user_id" },
   );
   bodyDialog.value = false;
   await loadTodayBody();

@@ -1,5 +1,6 @@
 export interface ExerciseMaster {
   id: string
+  user_id: string
   name: string
   part: string
   equipment: string
@@ -8,6 +9,7 @@ export interface ExerciseMaster {
 
 export interface WorkoutLog {
   id: number
+  user_id: string
   date: string
   exercise_id: string
   exercise?: ExerciseMaster
@@ -19,6 +21,7 @@ export interface WorkoutLog {
 
 export interface BodyComposition {
   id: number
+  user_id: string
   date: string
   weight: number
   body_fat_percentage: number | null

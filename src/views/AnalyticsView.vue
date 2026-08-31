@@ -47,9 +47,12 @@ import {
   LineElement, Title, Tooltip, Legend,
 } from 'chart.js'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/composables/useAuth'
 import type { BodyComposition } from '@/types'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+
+const { user } = useAuth()
 
 const period = ref('1M')
 const records = ref<BodyComposition[]>([])
@@ -97,7 +100,11 @@ async function loadData() {
   else if (period.value === '1M') { const d = new Date(now); d.setMonth(d.getMonth() - 1); from = d.toISOString().split('T')[0] }
   else if (period.value === '3M') { const d = new Date(now); d.setMonth(d.getMonth() - 3); from = d.toISOString().split('T')[0] }
 
-  let q = supabase.from('body_compositions').select('*').order('date')
+  let q = supabase
+    .from('body_compositions')
+    .select('*')
+    .eq('user_id', user.value!.id)
+    .order('date')
   if (from) q = q.gte('date', from)
   const { data } = await q
   records.value = (data as BodyComposition[]) ?? []
