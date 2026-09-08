@@ -197,6 +197,15 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-snackbar
+      :model-value="!!saveErrorMessage"
+      color="error"
+      timeout="8000"
+      @update:model-value="saveErrorMessage = ''"
+    >
+      保存に失敗しました: {{ saveErrorMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -230,6 +239,7 @@ const bodyDialog = ref(false)
 const bodyDialogDate = ref('')
 const inputWeight = ref<number | null>(null)
 const inputBodyFat = ref<number | null>(null)
+const saveErrorMessage = ref('')
 
 const todayStr = computed(() => today.toISOString().split('T')[0])
 
@@ -344,6 +354,7 @@ function openBodyDialog(dateStr: string, existing: BodyComposition | null) {
   bodyDialogDate.value = dateStr
   inputWeight.value = existing?.weight ?? null
   inputBodyFat.value = existing?.body_fat_percentage ?? null
+  saveErrorMessage.value = ''
   bodyDialog.value = true
 }
 
@@ -354,11 +365,21 @@ function editSelectedDayBody() {
 async function saveBodyComposition() {
   if (!inputWeight.value || !bodyDialogDate.value) return
   const targetDate = bodyDialogDate.value
-  await supabase.from('body_compositions').upsert({
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError || !userData.user) {
+    saveErrorMessage.value = 'ログイン状態を確認できませんでした。再ログインしてください。'
+    return
+  }
+  const { error } = await supabase.from('body_compositions').upsert({
     date: targetDate,
     weight: inputWeight.value,
     body_fat_percentage: inputBodyFat.value ?? null,
-  }, { onConflict: 'date' })
+    user_id: userData.user.id,
+  }, { onConflict: 'date,user_id' })
+  if (error) {
+    saveErrorMessage.value = error.message
+    return
+  }
   bodyDialog.value = false
   if (targetDate === todayStr.value) {
     await loadTodayBody()
