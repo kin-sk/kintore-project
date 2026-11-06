@@ -4,7 +4,7 @@
       <router-view />
     </v-main>
 
-    <v-bottom-navigation :elevation="8" grow color="primary">
+    <v-bottom-navigation :elevation="8" grow color="primary" :height="64">
       <v-btn to="/" value="home">
         <v-icon>mdi-calendar</v-icon>
         <span>ホーム</span>
