@@ -1,8 +1,13 @@
 <template>
-  <v-container class="pa-2" style="max-width: 600px;">
+  <v-container class="pa-2" style="max-width: 600px">
     <v-row class="mb-2" align="center">
       <v-col cols="auto">
-        <v-btn icon="mdi-chevron-left" variant="text" size="small" @click="prevMonth" />
+        <v-btn
+          icon="mdi-chevron-left"
+          variant="text"
+          size="small"
+          @click="prevMonth"
+        />
       </v-col>
       <v-col class="text-center">
         <h2 class="text-h6 font-weight-bold">
@@ -10,7 +15,13 @@
         </h2>
       </v-col>
       <v-col cols="auto">
-        <v-btn icon="mdi-chevron-right" variant="text" size="small" @click="nextMonth" :disabled="isCurrentMonth" />
+        <v-btn
+          icon="mdi-chevron-right"
+          variant="text"
+          size="small"
+          @click="nextMonth"
+          :disabled="isCurrentMonth"
+        />
       </v-col>
     </v-row>
 
@@ -26,19 +37,15 @@
 
         <!-- 日付グリッド -->
         <v-row v-for="(week, wi) in calendarWeeks" :key="wi" dense>
-          <v-col
-            v-for="(day, di) in week"
-            :key="di"
-            class="text-center pa-1"
-          >
+          <v-col v-for="(day, di) in week" :key="di" class="text-center pa-1">
             <div
               v-if="day"
               class="calendar-day d-flex align-center justify-center mx-auto"
               :class="{
-                'today': isToday(day),
+                today: isToday(day),
                 'has-workout': hasWorkout(day),
               }"
-              style="cursor: pointer;"
+              style="cursor: pointer"
               @click="handleDayClick(day)"
             >
               <span class="text-body-2">{{ day }}</span>
@@ -47,7 +54,8 @@
                 size="8"
                 color="primary"
                 class="workout-dot"
-              >mdi-circle</v-icon>
+                >mdi-circle</v-icon
+              >
             </div>
           </v-col>
         </v-row>
@@ -57,7 +65,13 @@
     <!-- メニュー（2×2） -->
     <v-row dense class="mb-4">
       <v-col cols="6">
-        <v-card to="/workout" color="primary" variant="flat" rounded="lg" class="menu-tile">
+        <v-card
+          to="/workout"
+          color="primary"
+          variant="flat"
+          rounded="lg"
+          class="menu-tile"
+        >
           <v-icon size="32">mdi-dumbbell</v-icon>
           <div class="text-body-1 font-weight-bold mt-1">筋トレ開始</div>
         </v-card>
@@ -73,7 +87,7 @@
           <v-icon size="32">mdi-scale-bathroom</v-icon>
           <div class="text-body-1 font-weight-bold mt-1">体重を記録</div>
           <div class="text-caption">
-            {{ todayBody ? `今日 ${todayBody.weight}kg` : '未入力' }}
+            {{ todayBody ? `今日 ${todayBody.weight}kg` : "未入力" }}
           </div>
         </v-card>
       </v-col>
@@ -128,13 +142,21 @@
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-3">
-          <v-progress-circular v-if="dayDetailLoading" indeterminate color="primary" class="d-block mx-auto my-4" />
+          <v-progress-circular
+            v-if="dayDetailLoading"
+            indeterminate
+            color="primary"
+            class="d-block mx-auto my-4"
+          />
           <template v-else>
-            <!-- 体組成 -->
+            <!-- 体組成（鉛筆ボタンで過去日も編集できる） -->
             <div class="mb-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="text-caption text-medium-emphasis font-weight-bold">
-                  <v-icon size="14" class="mr-1">mdi-scale-bathroom</v-icon>体組成
+                <div
+                  class="text-caption text-medium-emphasis font-weight-bold"
+                >
+                  <v-icon size="14" class="mr-1">mdi-scale-bathroom</v-icon
+                  >体組成
                 </div>
                 <v-btn
                   icon="mdi-pencil"
@@ -145,15 +167,28 @@
               </div>
               <v-row v-if="selectedDayBody" dense>
                 <v-col cols="6" class="text-center">
-                  <div class="text-h6 font-weight-bold">{{ selectedDayBody.weight }} <span class="text-body-2">kg</span></div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ selectedDayBody.weight }}
+                    <span class="text-body-2">kg</span>
+                  </div>
                   <div class="text-caption text-medium-emphasis">体重</div>
                 </v-col>
                 <v-col cols="6" class="text-center">
-                  <div class="text-h6 font-weight-bold">{{ selectedDayBody.body_fat_percentage ?? '-' }} <span class="text-body-2" v-if="selectedDayBody.body_fat_percentage != null">%</span></div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ selectedDayBody.body_fat_percentage ?? "-" }}
+                    <span
+                      class="text-body-2"
+                      v-if="selectedDayBody.body_fat_percentage != null"
+                      >%</span
+                    >
+                  </div>
                   <div class="text-caption text-medium-emphasis">体脂肪率</div>
                 </v-col>
               </v-row>
-              <div v-else class="text-caption text-medium-emphasis text-center py-1">
+              <div
+                v-else
+                class="text-caption text-medium-emphasis text-center py-1"
+              >
                 記録がありません
               </div>
             </div>
@@ -162,24 +197,44 @@
 
             <!-- トレーニング記録 -->
             <div v-if="selectedDayWorkoutGroups.length > 0">
-              <div class="text-caption text-medium-emphasis font-weight-bold mb-2">
+              <div
+                class="text-caption text-medium-emphasis font-weight-bold mb-2"
+              >
                 <v-icon size="14" class="mr-1">mdi-dumbbell</v-icon>トレーニング
               </div>
-              <div v-for="group in selectedDayWorkoutGroups" :key="group.exerciseName" class="mb-3">
-                <div class="text-body-2 font-weight-bold mb-1">{{ group.exerciseName }}</div>
+              <div
+                v-for="group in selectedDayWorkoutGroups"
+                :key="group.exerciseName"
+                class="mb-3"
+              >
+                <div class="text-body-2 font-weight-bold mb-1">
+                  {{ group.exerciseName }}
+                </div>
                 <v-table density="compact" class="rounded">
                   <thead>
                     <tr>
-                      <th class="text-caption text-center" style="width:33%">セット</th>
-                      <th class="text-caption text-center" style="width:33%">重量</th>
-                      <th class="text-caption text-center" style="width:33%">回数</th>
+                      <th class="text-caption text-center" style="width: 33%">
+                        セット
+                      </th>
+                      <th class="text-caption text-center" style="width: 33%">
+                        重量
+                      </th>
+                      <th class="text-caption text-center" style="width: 33%">
+                        回数
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="log in group.logs" :key="log.set_number">
-                      <td class="text-caption text-center">{{ log.set_number }}</td>
-                      <td class="text-caption text-center">{{ log.weight }} kg</td>
-                      <td class="text-caption text-center">{{ log.reps }} 回</td>
+                      <td class="text-caption text-center">
+                        {{ log.set_number }}
+                      </td>
+                      <td class="text-caption text-center">
+                        {{ log.weight }} kg
+                      </td>
+                      <td class="text-caption text-center">
+                        {{ log.reps }} 回
+                      </td>
                     </tr>
                   </tbody>
                 </v-table>
@@ -206,197 +261,228 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { supabase } from '@/lib/supabase'
-import { toLocalDateStr} from '@/lib/date'
-import type { BodyComposition, WorkoutLog } from '@/types'
+import { ref, computed, onMounted, watch } from "vue";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/composables/useAuth";
+import { toLocalDateStr } from "@/lib/date";
+import type { BodyComposition, WorkoutLog } from "@/types";
 
-const today = new Date()
-const currentYear = ref(today.getFullYear())
-const currentMonth = ref(today.getMonth() + 1)
+const { user } = useAuth();
+
+const today = new Date();
+const currentYear = ref(today.getFullYear());
+const currentMonth = ref(today.getMonth() + 1);
 
 function prevMonth() {
-  if (currentMonth.value === 1) { currentYear.value--; currentMonth.value = 12 }
-  else { currentMonth.value-- }
+  if (currentMonth.value === 1) {
+    currentYear.value--;
+    currentMonth.value = 12;
+  } else {
+    currentMonth.value--;
+  }
 }
 
 function nextMonth() {
-  if (currentMonth.value === 12) { currentYear.value++; currentMonth.value = 1 }
-  else { currentMonth.value++ }
+  if (currentMonth.value === 12) {
+    currentYear.value++;
+    currentMonth.value = 1;
+  } else {
+    currentMonth.value++;
+  }
 }
 
-const isCurrentMonth = computed(() =>
-  currentYear.value === today.getFullYear() && currentMonth.value === today.getMonth() + 1
-)
+const isCurrentMonth = computed(
+  () =>
+    currentYear.value === today.getFullYear() &&
+    currentMonth.value === today.getMonth() + 1,
+);
 
-const weekDays = ['日', '月', '火', '水', '木', '金', '土']
-const workoutDates = ref<Set<number>>(new Set())
-const todayBody = ref<BodyComposition | null>(null)
-const bodyDialog = ref(false)
-const bodyDialogDate = ref('')
-const inputWeight = ref<number | null>(null)
-const inputBodyFat = ref<number | null>(null)
-const saveErrorMessage = ref('')
+const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
+const workoutDates = ref<Set<number>>(new Set());
+const todayBody = ref<BodyComposition | null>(null);
+const bodyDialog = ref(false);
+const bodyDialogDate = ref("");
+const inputWeight = ref<number | null>(null);
+const inputBodyFat = ref<number | null>(null);
+const saveErrorMessage = ref("");
 
-const todayStr = computed(() => toLocalDateStr(today))
+const todayStr = computed(() => toLocalDateStr(today));
 
 const bodyDialogTitle = computed(() => {
-  if (!bodyDialogDate.value || bodyDialogDate.value === todayStr.value) return '体組成を記録'
-  const [, m, d] = bodyDialogDate.value.split('-')
-  return `${Number(m)}月${Number(d)}日の体組成を記録`
-})
+  if (!bodyDialogDate.value || bodyDialogDate.value === todayStr.value)
+    return "体組成を記録";
+  const [, m, d] = bodyDialogDate.value.split("-");
+  return `${Number(m)}月${Number(d)}日の体組成を記録`;
+});
 
-const dayDetailDialog = ref(false)
-const dayDetailLoading = ref(false)
-const selectedDay = ref<number | null>(null)
-const selectedDayBody = ref<BodyComposition | null>(null)
-const selectedDayWorkouts = ref<WorkoutLog[]>([])
+const dayDetailDialog = ref(false);
+const dayDetailLoading = ref(false);
+const selectedDay = ref<number | null>(null);
+const selectedDayBody = ref<BodyComposition | null>(null);
+const selectedDayWorkouts = ref<WorkoutLog[]>([]);
 
 const selectedDayDateStr = computed(() => {
-  if (selectedDay.value == null) return ''
-  return `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}-${String(selectedDay.value).padStart(2, '0')}`
-})
+  if (selectedDay.value == null) return "";
+  return `${currentYear.value}-${String(currentMonth.value).padStart(2, "0")}-${String(selectedDay.value).padStart(2, "0")}`;
+});
 
 const selectedDayWorkoutGroups = computed(() => {
-  const map = new Map<string, WorkoutLog[]>()
+  const map = new Map<string, WorkoutLog[]>();
   for (const log of selectedDayWorkouts.value) {
-    const name = log.exercise?.name ?? log.exercise_id
-    if (!map.has(name)) map.set(name, [])
-    map.get(name)!.push(log)
+    const name = log.exercise?.name ?? log.exercise_id;
+    if (!map.has(name)) map.set(name, []);
+    map.get(name)!.push(log);
   }
   return Array.from(map.entries()).map(([exerciseName, logs]) => ({
     exerciseName,
     logs: logs.sort((a, b) => a.set_number - b.set_number),
-  }))
-})
+  }));
+});
 
 const calendarWeeks = computed(() => {
-  const firstDay = new Date(currentYear.value, currentMonth.value - 1, 1).getDay()
-  const daysInMonth = new Date(currentYear.value, currentMonth.value, 0).getDate()
-  const weeks: (number | null)[][] = []
-  let week: (number | null)[] = Array(firstDay).fill(null)
+  const firstDay = new Date(
+    currentYear.value,
+    currentMonth.value - 1,
+    1,
+  ).getDay();
+  const daysInMonth = new Date(
+    currentYear.value,
+    currentMonth.value,
+    0,
+  ).getDate();
+  const weeks: (number | null)[][] = [];
+  let week: (number | null)[] = Array(firstDay).fill(null);
 
   for (let d = 1; d <= daysInMonth; d++) {
-    week.push(d)
-    if (week.length === 7) { weeks.push(week); week = [] }
+    week.push(d);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
+    }
   }
   if (week.length > 0) {
-    while (week.length < 7) week.push(null)
-    weeks.push(week)
+    while (week.length < 7) week.push(null);
+    weeks.push(week);
   }
-  return weeks
-})
+  return weeks;
+});
 
 function isToday(day: number) {
-  return day === today.getDate() && currentMonth.value === today.getMonth() + 1 && currentYear.value === today.getFullYear()
+  return (
+    day === today.getDate() &&
+    currentMonth.value === today.getMonth() + 1 &&
+    currentYear.value === today.getFullYear()
+  );
 }
 
 function hasWorkout(day: number) {
-  return workoutDates.value.has(day)
+  return workoutDates.value.has(day);
 }
 
 async function loadWorkoutDates() {
-  const y = currentYear.value
-  const m = currentMonth.value
-  const mm = String(m).padStart(2, '0')
-  const lastDay = new Date(y, m, 0).getDate()
-  const startDate = `${y}-${mm}-01`
-  const endDate = `${y}-${mm}-${String(lastDay).padStart(2, '0')}`
+  const y = currentYear.value;
+  const m = currentMonth.value;
+  const lastDay = new Date(y, m, 0).getDate();
+  const startDate = `${y}-${String(m).padStart(2, "0")}-01`;
+  const endDate = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
   const { data } = await supabase
-    .from('workout_logs')
-    .select('date')
-    .gte('date', startDate)
-    .lte('date', endDate)
+    .from("workout_logs")
+    .select("date")
+    .eq("user_id", user.value!.id)
+    .gte("date", startDate)
+    .lte("date", endDate);
   if (data) {
-    workoutDates.value = new Set(data.map((r) => Number(r.date.slice(8, 10))))
+    workoutDates.value = new Set(data.map((r) => Number(r.date.split("-")[2])));
   }
 }
 
 watch([currentYear, currentMonth], () => {
-  workoutDates.value = new Set()
-  loadWorkoutDates()
-})
+  workoutDates.value = new Set();
+  loadWorkoutDates();
+});
 
 async function loadTodayBody() {
   const { data } = await supabase
-    .from('body_compositions')
-    .select('*')
-    .eq('date', todayStr.value)
-    .maybeSingle()
-  todayBody.value = data
+    .from("body_compositions")
+    .select("*")
+    .eq("user_id", user.value!.id)
+    .eq("date", todayStr.value)
+    .maybeSingle();
+  todayBody.value = data;
 }
 
 async function handleDayClick(day: number) {
-  selectedDay.value = day
-  dayDetailDialog.value = true
-  dayDetailLoading.value = true
-  const dateStr = selectedDayDateStr.value
+  selectedDay.value = day;
+  dayDetailDialog.value = true;
+  dayDetailLoading.value = true;
+  const dateStr = selectedDayDateStr.value;
   const [workoutResult, bodyResult] = await Promise.all([
     supabase
-      .from('workout_logs')
-      .select('*, exercise:exercise_masters(*)')
-      .eq('date', dateStr)
-      .order('exercise_id')
-      .order('set_number'),
+      .from("workout_logs")
+      .select("*, exercise:exercise_masters(*)")
+      .eq("user_id", user.value!.id)
+      .eq("date", dateStr)
+      .order("exercise_id")
+      .order("set_number"),
     supabase
-      .from('body_compositions')
-      .select('*')
-      .eq('date', dateStr)
+      .from("body_compositions")
+      .select("*")
+      .eq("user_id", user.value!.id)
+      .eq("date", dateStr)
       .maybeSingle(),
-  ])
-  selectedDayWorkouts.value = (workoutResult.data ?? []) as WorkoutLog[]
-  selectedDayBody.value = bodyResult.data
-  dayDetailLoading.value = false
+  ]);
+  selectedDayWorkouts.value = (workoutResult.data ?? []) as WorkoutLog[];
+  selectedDayBody.value = bodyResult.data;
+  dayDetailLoading.value = false;
 }
 
 function openBodyDialog(dateStr: string, existing: BodyComposition | null) {
-  bodyDialogDate.value = dateStr
-  inputWeight.value = existing?.weight ?? null
-  inputBodyFat.value = existing?.body_fat_percentage ?? null
-  saveErrorMessage.value = ''
-  bodyDialog.value = true
+  bodyDialogDate.value = dateStr;
+  inputWeight.value = existing?.weight ?? null;
+  inputBodyFat.value = existing?.body_fat_percentage ?? null;
+  saveErrorMessage.value = "";
+  bodyDialog.value = true;
 }
 
 function editSelectedDayBody() {
-  openBodyDialog(selectedDayDateStr.value, selectedDayBody.value)
+  openBodyDialog(selectedDayDateStr.value, selectedDayBody.value);
 }
 
 async function saveBodyComposition() {
-  if (!inputWeight.value || !bodyDialogDate.value) return
-  const targetDate = bodyDialogDate.value
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError || !userData.user) {
-    saveErrorMessage.value = 'ログイン状態を確認できませんでした。再ログインしてください。'
-    return
-  }
-  const { error } = await supabase.from('body_compositions').upsert({
-    date: targetDate,
-    weight: inputWeight.value,
-    body_fat_percentage: inputBodyFat.value ?? null,
-    user_id: userData.user.id,
-  }, { onConflict: 'date,user_id' })
+  if (!inputWeight.value || !bodyDialogDate.value) return;
+  const targetDate = bodyDialogDate.value;
+  const { error } = await supabase.from("body_compositions").upsert(
+    {
+      user_id: user.value!.id,
+      date: targetDate,
+      weight: inputWeight.value,
+      body_fat_percentage: inputBodyFat.value ?? null,
+    },
+    { onConflict: "date,user_id" },
+  );
   if (error) {
-    saveErrorMessage.value = error.message
-    return
+    saveErrorMessage.value = error.message;
+    return;
   }
-  bodyDialog.value = false
+  bodyDialog.value = false;
   if (targetDate === todayStr.value) {
-    await loadTodayBody()
+    await loadTodayBody();
   }
   if (targetDate === selectedDayDateStr.value) {
     const { data } = await supabase
-      .from('body_compositions')
-      .select('*')
-      .eq('date', targetDate)
-      .maybeSingle()
-    selectedDayBody.value = data
+      .from("body_compositions")
+      .select("*")
+      .eq("user_id", user.value!.id)
+      .eq("date", targetDate)
+      .maybeSingle();
+    selectedDayBody.value = data;
   }
 }
 
 onMounted(() => {
-  loadWorkoutDates()
-  loadTodayBody()
-})
+  loadWorkoutDates();
+  loadTodayBody();
+});
 </script>
 
 <style scoped>
@@ -409,7 +495,7 @@ onMounted(() => {
 }
 .today {
   background-color: rgba(25, 118, 210, 0.2);
-  border: 2px solid #1976D2;
+  border: 2px solid #1976d2;
 }
 .workout-dot {
   position: absolute;
