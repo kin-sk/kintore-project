@@ -33,7 +33,10 @@
       <v-col cols="6">
         <v-card rounded="lg" class="text-center pa-3">
           <div class="text-caption text-medium-emphasis">最新体脂肪率</div>
-          <div class="text-h5 font-weight-bold">{{ latest.body_fat_percentage ?? '-' }} <span class="text-body-2">%</span></div>
+          <div class="text-h5 font-weight-bold">
+            {{ latest.body_fat_percentage ?? '-' }}
+            <span v-if="latest.body_fat_percentage != null" class="text-body-2">%</span>
+          </div>
           <div v-if="fatDiff != null" class="text-caption">前回比 {{ formatDiff(fatDiff) }} %</div>
         </v-card>
       </v-col>
@@ -70,7 +73,7 @@
                 <td class="text-caption text-center">{{ formatMd(r.date) }}</td>
                 <td class="text-caption text-center">{{ r.weight }} kg</td>
                 <td class="text-caption text-center">{{ r.diff != null ? formatDiff(r.diff) : '-' }}</td>
-                <td class="text-caption text-center">{{ r.body_fat_percentage ?? '-' }} %</td>
+                <td class="text-caption text-center">{{ r.body_fat_percentage != null ? `${r.body_fat_percentage} %` : '-' }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -78,7 +81,6 @@
         <div v-else class="text-caption text-medium-emphasis text-center py-2">記録がありません</div>
       </v-card-text>
     </v-card>
-
   </v-container>
 </template>
 
@@ -90,10 +92,13 @@ import {
   LineElement, Title, Tooltip, Legend,
 } from 'chart.js'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/composables/useAuth'
 import { toLocalDateStr } from '@/lib/date'
 import type { BodyComposition } from '@/types'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+
+const { user } = useAuth()
 
 const period = ref('1M')
 const records = ref<BodyComposition[]>([])
@@ -189,7 +194,11 @@ async function loadData() {
   else if (period.value === '1M') { const d = new Date(now); d.setMonth(d.getMonth() - 1); from = toLocalDateStr(d) }
   else if (period.value === '3M') { const d = new Date(now); d.setMonth(d.getMonth() - 3); from = toLocalDateStr(d) }
 
-  let q = supabase.from('body_compositions').select('*').order('date')
+  let q = supabase
+    .from('body_compositions')
+    .select('*')
+    .eq('user_id', user.value!.id)
+    .order('date')
   if (from) q = q.gte('date', from)
   const { data } = await q
   records.value = (data as BodyComposition[]) ?? []
@@ -197,13 +206,23 @@ async function loadData() {
 
 async function loadSummary() {
   const today = new Date()
-  const from6 = new Date(today); from6.setDate(today.getDate() - 6)  // 表示する7日間の初日
-  const from7 = new Date(today); from7.setDate(today.getDate() - 7)  // 初日の前回比計算用に1日多く取得
+  const from6 = new Date(today); from6.setDate(today.getDate() - 6) // 表示する7日間の初日
+  const from7 = new Date(today); from7.setDate(today.getDate() - 7) // 初日の前回比計算用に1日多く取得
   weekFrom.value = toLocalDateStr(from6)
 
   const [latestRes, weekRes] = await Promise.all([
-    supabase.from('body_compositions').select('*').order('date', { ascending: false }).limit(2),
-    supabase.from('body_compositions').select('*').gte('date', toLocalDateStr(from7)).order('date'),
+    supabase
+      .from('body_compositions')
+      .select('*')
+      .eq('user_id', user.value!.id)
+      .order('date', { ascending: false })
+      .limit(2),
+    supabase
+      .from('body_compositions')
+      .select('*')
+      .eq('user_id', user.value!.id)
+      .gte('date', toLocalDateStr(from7))
+      .order('date'),
   ])
   latestTwo.value = (latestRes.data as BodyComposition[]) ?? []
   weekRecords.value = (weekRes.data as BodyComposition[]) ?? []
