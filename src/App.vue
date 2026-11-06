@@ -4,7 +4,7 @@
       <router-view />
     </v-main>
 
-    <v-bottom-navigation :elevation="8" grow color="primary" :height="64" class="safe-bottom">
+    <v-bottom-navigation :elevation="8" grow color="primary">
       <v-btn to="/" value="home">
         <v-icon>mdi-calendar</v-icon>
         <span>ホーム</span>
@@ -27,12 +27,3 @@
 
 <script setup lang="ts">
 </script>
-<style>
-.safe-bottom.v-bottom-navigation {
-  height: calc(64px + env(safe-area-inset-bottom)) !important;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.v-main {
-  padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
-}
-</style>
