@@ -212,6 +212,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { toLocalDateStr} from '@/lib/date'
 import type { BodyComposition, WorkoutLog } from '@/types'
 
 const today = new Date()
@@ -241,7 +242,7 @@ const inputWeight = ref<number | null>(null)
 const inputBodyFat = ref<number | null>(null)
 const saveErrorMessage = ref('')
 
-const todayStr = computed(() => today.toISOString().split('T')[0])
+const todayStr = computed(() => toLocalDateStr(today))
 
 const bodyDialogTitle = computed(() => {
   if (!bodyDialogDate.value || bodyDialogDate.value === todayStr.value) return '体組成を記録'
@@ -301,15 +302,17 @@ function hasWorkout(day: number) {
 async function loadWorkoutDates() {
   const y = currentYear.value
   const m = currentMonth.value
-  const startDate = `${y}-${String(m).padStart(2, '0')}-01`
-  const endDate = `${y}-${String(m).padStart(2, '0')}-31`
+  const mm = String(m).padStart(2, '0')
+  const lastDay = new Date(y, m, 0).getDate()
+  const startDate = `${y}-${mm}-01`
+  const endDate = `${y}-${mm}-${String(lastDay).padStart(2, '0')}`
   const { data } = await supabase
     .from('workout_logs')
     .select('date')
     .gte('date', startDate)
     .lte('date', endDate)
   if (data) {
-    workoutDates.value = new Set(data.map((r) => new Date(r.date).getDate()))
+    workoutDates.value = new Set(data.map((r) => Number(r.date.slice(8, 10))))
   }
 }
 
