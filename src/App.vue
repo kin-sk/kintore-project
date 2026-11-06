@@ -1,18 +1,10 @@
 <template>
   <v-app>
-    <v-app-bar v-if="isAuthenticated" color="primary" dark>
-      <v-toolbar-title>筋トレ記録</v-toolbar-title>
-      <v-spacer />
-      <v-btn icon @click="handleLogout">
-        <v-icon>mdi-logout</v-icon>
-      </v-btn>
-    </v-app-bar>
-
     <v-main>
       <router-view />
     </v-main>
 
-    <v-bottom-navigation v-if="isAuthenticated" :elevation="8" grow color="primary">
+    <v-bottom-navigation :elevation="8" grow color="primary" :height="64" class="safe-bottom">
       <v-btn to="/" value="home">
         <v-icon>mdi-calendar</v-icon>
         <span>ホーム</span>
@@ -34,14 +26,13 @@
 </template>
 
 <script setup lang="ts">
-import { useAuth } from '@/composables/useAuth'
-import { useRouter } from 'vue-router'
-
-const { isAuthenticated, signOut } = useAuth()
-const router = useRouter()
-
-async function handleLogout() {
-  await signOut()
-  router.push('/auth')
-}
 </script>
+<style>
+.safe-bottom.v-bottom-navigation {
+  height: calc(64px + env(safe-area-inset-bottom)) !important;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.v-main {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+}
+</style>
