@@ -47,12 +47,10 @@ import {
   LineElement, Title, Tooltip, Legend,
 } from 'chart.js'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/composables/useAuth'
+import { toLocalDateStr } from '@/lib/date'
 import type { BodyComposition } from '@/types'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
-
-const { user } = useAuth()
 
 const period = ref('1M')
 const records = ref<BodyComposition[]>([])
@@ -96,15 +94,11 @@ const chartOptions = {
 async function loadData() {
   let from: string | null = null
   const now = new Date()
-  if (period.value === '1W') { const d = new Date(now); d.setDate(d.getDate() - 7); from = d.toISOString().split('T')[0] }
-  else if (period.value === '1M') { const d = new Date(now); d.setMonth(d.getMonth() - 1); from = d.toISOString().split('T')[0] }
-  else if (period.value === '3M') { const d = new Date(now); d.setMonth(d.getMonth() - 3); from = d.toISOString().split('T')[0] }
+  if (period.value === '1W') { const d = new Date(now); d.setDate(d.getDate() - 7); from = toLocalDateStr(d) }
+  else if (period.value === '1M') { const d = new Date(now); d.setMonth(d.getMonth() - 1); from = toLocalDateStr(d) }
+  else if (period.value === '3M') { const d = new Date(now); d.setMonth(d.getMonth() - 3); from = toLocalDateStr(d) }
 
-  let q = supabase
-    .from('body_compositions')
-    .select('*')
-    .eq('user_id', user.value!.id)
-    .order('date')
+  let q = supabase.from('body_compositions').select('*').order('date')
   if (from) q = q.gte('date', from)
   const { data } = await q
   records.value = (data as BodyComposition[]) ?? []
