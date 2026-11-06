@@ -54,46 +54,42 @@
       </v-card-text>
     </v-card>
 
-    <!-- 体組成入力ボタン -->
-    <v-btn
-      block
-      variant="outlined"
-      color="secondary"
-      class="mb-3"
-      prepend-icon="mdi-scale-bathroom"
-      @click="openBodyDialog(todayStr, todayBody)"
-    >
-      今日の体重・体脂肪を入力
-    </v-btn>
-
-    <!-- 筋トレ開始ボタン -->
-    <v-btn
-      block
-      size="x-large"
-      color="primary"
-      class="mb-4"
-      prepend-icon="mdi-dumbbell"
-      to="/workout"
-    >
-      今日の筋トレを開始！
-    </v-btn>
-
-    <!-- 今日の体組成表示 -->
-    <v-card v-if="todayBody" rounded="lg" class="mb-4">
-      <v-card-title class="text-body-1">今日の記録</v-card-title>
-      <v-card-text>
-        <v-row>
-          <v-col cols="6" class="text-center">
-            <div class="text-h5 font-weight-bold">{{ todayBody.weight }} <span class="text-body-2">kg</span></div>
-            <div class="text-caption text-medium-emphasis">体重</div>
-          </v-col>
-          <v-col cols="6" class="text-center">
-            <div class="text-h5 font-weight-bold">{{ todayBody.body_fat_percentage ?? '-' }} <span class="text-body-2">%</span></div>
-            <div class="text-caption text-medium-emphasis">体脂肪率</div>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
+    <!-- メニュー（2×2） -->
+    <v-row dense class="mb-4">
+      <v-col cols="6">
+        <v-card to="/workout" color="primary" variant="flat" rounded="lg" class="menu-tile">
+          <v-icon size="32">mdi-dumbbell</v-icon>
+          <div class="text-body-1 font-weight-bold mt-1">筋トレ開始</div>
+        </v-card>
+      </v-col>
+      <v-col cols="6">
+        <v-card
+          color="secondary"
+          variant="tonal"
+          rounded="lg"
+          class="menu-tile"
+          @click="openBodyDialog(todayStr, todayBody)"
+        >
+          <v-icon size="32">mdi-scale-bathroom</v-icon>
+          <div class="text-body-1 font-weight-bold mt-1">体重を記録</div>
+          <div class="text-caption">
+            {{ todayBody ? `今日 ${todayBody.weight}kg` : '未入力' }}
+          </div>
+        </v-card>
+      </v-col>
+      <v-col cols="6">
+        <v-card to="/analytics" variant="tonal" rounded="lg" class="menu-tile">
+          <v-icon size="32">mdi-chart-line</v-icon>
+          <div class="text-body-1 font-weight-bold mt-1">グラフ</div>
+        </v-card>
+      </v-col>
+      <v-col cols="6">
+        <v-card to="/exercises" variant="tonal" rounded="lg" class="menu-tile">
+          <v-icon size="32">mdi-format-list-bulleted</v-icon>
+          <div class="text-body-1 font-weight-bold mt-1">種目</div>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- 体組成入力ダイアログ -->
     <v-dialog v-model="bodyDialog" max-width="400">
@@ -418,5 +414,13 @@ onMounted(() => {
 .workout-dot {
   position: absolute;
   bottom: 2px;
+}
+.menu-tile {
+  height: 104px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 </style>
