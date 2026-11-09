@@ -106,6 +106,7 @@
           color="primary"
           class="mt-3"
           :disabled="!selectedExercise || !inputWeight || !inputReps"
+          :loading="adding"
           @click="addSet"
         >
           <v-icon start>mdi-plus</v-icon>
@@ -135,7 +136,7 @@
       </v-list>
     </v-card>
 
-    <v-snackbar v-model="snackbar" timeout="2000" color="success">セットを記録しました</v-snackbar>
+    <v-snackbar v-model="snackbar" :timeout="snackbarColor === 'error' ? 6000 : 2000" :color="snackbarColor">{{ snackbarText }}</v-snackbar>
   </v-container>
 </template>
 
@@ -158,6 +159,9 @@ const inputReps = ref<number | null>(null)
 const todaySets = ref<WorkoutLog[]>([])
 const lastRecord = ref<WorkoutLog | null>(null)
 const snackbar = ref(false)
+const snackbarText = ref('')
+const snackbarColor = ref<'success' | 'error'>('success')
+const adding = ref(false)
 
 const filteredExercises = computed(() =>
   exercises.value.filter((e) => {
@@ -323,24 +327,46 @@ async function loadTodaySets() {
 }
 
 async function addSet() {
+  if (adding.value) return
   if (!selectedExercise.value || !inputWeight.value || !inputReps.value) return
-  const today = toLocalDateStr()
-  const nextSet = todaySets.value.filter((s) => s.exercise_id === selectedExercise.value!.id).length + 1
-  await supabase.from('workout_logs').insert({
-    user_id: user.value!.id,
-    date: today,
-    exercise_id: selectedExercise.value.id,
-    weight: inputWeight.value,
-    reps: inputReps.value,
-    set_number: nextSet,
-  })
-  snackbar.value = true
-  await loadTodaySets()
-  // タイマー自動スタート
-  if (!timerRunning.value) {
+  adding.value = true
+  try {
+    const today = toLocalDateStr()
+    const nextSet = todaySets.value.filter((s) => s.exercise_id === selectedExercise.value!.id).length + 1
+    const { data, error } = await supabase
+      .from('workout_logs')
+      .insert({
+        user_id: user.value!.id,
+        date: today,
+        exercise_id: selectedExercise.value.id,
+        weight: inputWeight.value,
+        reps: inputReps.value,
+        set_number: nextSet,
+      })
+      .select('*, exercise:exercise_masters(name)')
+      .single()
+    if (error) throw error
+
+    // 保存結果をそのまま一覧に反映（再取得を待たない）
+    todaySets.value.push(data as WorkoutLog)
+    showSnackbar('セットを記録しました', 'success')
+
+    // インターバル中でも、新しいセットの記録でタイマーを頭からかけ直す
+    stopTick()
     timerRemaining.value = timerSeconds.value
     startTimer()
+  } catch (e: any) {
+    console.error('[addSet] failed', e)
+    showSnackbar(`記録に失敗しました: ${e?.message ?? e}`, 'error')
+  } finally {
+    adding.value = false
   }
+}
+
+function showSnackbar(text: string, color: 'success' | 'error') {
+  snackbarText.value = text
+  snackbarColor.value = color
+  snackbar.value = true
 }
 
 async function deleteSet(id: number, index: number) {
