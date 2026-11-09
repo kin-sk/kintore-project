@@ -31,11 +31,14 @@
         </div>
       </div>
       <div class="t-ctl">
-        <div class="t-chips">
+        <span class="t-cap">休憩時間</span>
+        <div class="t-chips" role="radiogroup" aria-label="休憩時間">
           <button
             v-for="sec in TIMER_PRESETS"
             :key="sec"
             class="num"
+            role="radio"
+            :aria-checked="timerSeconds === sec"
             :class="{ on: timerSeconds === sec }"
             @click="setTimer(sec)"
           >{{ sec < 120 ? `${sec}s` : `${sec / 60}m` }}</button>
@@ -147,7 +150,7 @@
           <v-menu v-for="log in g.sets" :key="log.id" location="top">
             <template #activator="{ props }">
               <button v-bind="props" class="pill num" :class="{ new: log.id === lastAddedId }">
-                {{ fmtW(log.weight) }}×{{ log.reps }}
+                {{ fmtW(log.weight) }}<small>kg</small> × {{ log.reps }}
               </button>
             </template>
             <v-list density="compact">
@@ -535,13 +538,13 @@ onMounted(() => {
 
 <style scoped>
 .workout {
-  --c-surface: rgb(var(--v-theme-surface));
-  --c-raised: rgb(var(--v-theme-surface-variant));
-  --c-primary: rgb(var(--v-theme-primary));
-  --c-warn: rgb(var(--v-theme-warning));
-  --c-fg: rgb(var(--v-theme-on-background));
-  --c-muted: #8b95a3;
-  --c-line: #2f3540;
+  --c-surface: var(--k-surface);
+  --c-raised: var(--k-raised);
+  --c-primary: var(--k-primary);
+  --c-warn: var(--k-warn);
+  --c-fg: var(--k-fg);
+  --c-muted: var(--k-muted);
+  --c-line: var(--k-line);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -587,13 +590,15 @@ button {
 .ring-in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .ring-in .num { font-size: 1.75rem; font-weight: 600; line-height: 1; }
 .ring-in small { font-size: .62rem; color: var(--c-muted); }
-.t-ctl { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+.t-ctl { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.t-cap { font-size: .66rem; color: var(--c-muted); letter-spacing: .06em; margin-bottom: -4px; }
 .t-chips { display: flex; gap: 6px; }
 .t-chips button {
-  flex: 1; padding: 5px 0; border-radius: 8px;
-  background: var(--c-raised); font-weight: 600; font-size: .95rem; color: #b9c2ce;
+  flex: 1; padding: 4px 0; border-radius: 8px;
+  background: transparent; border: 1.5px solid var(--c-line);
+  font-weight: 600; font-size: 1rem; color: var(--c-muted);
 }
-.t-chips button.on { background: rgba(76, 141, 255, .18); color: #8fb8ff; }
+.t-chips button.on { background: var(--c-fg); border-color: var(--c-fg); color: var(--k-bg); }
 .t-btns { display: flex; gap: 8px; }
 .t-btns .play {
   flex: 1; height: 40px; border-radius: 12px; background: var(--c-primary); color: #fff;
@@ -611,7 +616,7 @@ button {
   padding: 4px 12px; border-radius: 999px; border: 1px solid var(--c-line);
   font-size: .78rem; color: #b9c2ce; white-space: nowrap; flex: none;
 }
-.w-parts button.on { background: var(--c-fg); color: rgb(var(--v-theme-background)); border-color: var(--c-fg); }
+.w-parts button.on { background: var(--c-fg); color: var(--k-bg); border-color: var(--c-fg); }
 .w-parts .search { margin-left: auto; padding: 4px 8px; display: flex; align-items: center; }
 
 /* 種目カード */
@@ -664,10 +669,11 @@ button {
 .grp b { font-size: .84rem; }
 .pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .pill {
-  background: var(--c-raised); border-radius: 8px; padding: 2px 9px;
-  font-size: .95rem; font-weight: 600; color: #cfd6df;
+  background: var(--c-raised); border-radius: 8px; padding: 3px 10px;
+  font-size: 1.1rem; font-weight: 600; color: var(--c-fg); line-height: 1.3;
 }
-@keyframes pop { from { background: rgba(76, 141, 255, .45); } to { background: var(--c-raised); } }
+.pill small { font-size: .72rem; color: var(--c-muted); margin-left: 1px; }
+@keyframes pop { from { background: rgba(76, 141, 255, .55); } to { background: var(--c-raised); } }
 .pill.new { animation: pop 1.4s ease-out; }
 
 button:focus-visible, input:focus-visible { outline: 2px solid var(--c-warn); outline-offset: 2px; }
