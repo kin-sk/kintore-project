@@ -439,14 +439,14 @@ onMounted(() => {
 
 <style scoped>
 .graph {
-  --c-surface: rgb(var(--v-theme-surface));
-  --c-raised: rgb(var(--v-theme-surface-variant));
-  --c-primary: rgb(var(--v-theme-primary));
-  --c-fg: rgb(var(--v-theme-on-background));
-  --c-muted: #8b95a3;
-  --c-line: #2a303a;
-  --c-ok: #4fd19b;
-  --c-up: #ff8a65;
+  --c-surface: var(--k-surface);
+  --c-raised: var(--k-raised);
+  --c-primary: var(--k-primary);
+  --c-fg: var(--k-fg);
+  --c-muted: var(--k-muted);
+  --c-line: var(--k-line);
+  --c-ok: var(--k-ok);
+  --c-up: var(--k-up);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -456,7 +456,7 @@ button {
   font: inherit; color: inherit; border: 0; background: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-button:focus-visible { outline: 2px solid rgb(var(--v-theme-warning)); outline-offset: 2px; }
+button:focus-visible { outline: 2px solid var(--k-warn); outline-offset: 2px; }
 .lbl { font-size: .72rem; color: var(--c-muted); letter-spacing: .04em; }
 .down { color: var(--c-ok); }
 .up { color: var(--c-up); }
@@ -466,7 +466,7 @@ button:focus-visible { outline: 2px solid rgb(var(--v-theme-warning)); outline-o
 /* タブ */
 .tabs { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--c-surface); border-radius: 12px; padding: 3px; }
 .tabs button { padding: 8px 0; border-radius: 9px; font-size: .85rem; color: var(--c-muted); font-weight: 700; }
-.tabs button.on { background: var(--c-raised); color: var(--c-fg); }
+.tabs button.on { background: var(--c-primary); color: #fff; }
 
 /* 最新値 */
 .hero { display: flex; justify-content: space-between; align-items: flex-end; }
@@ -481,7 +481,7 @@ button:focus-visible { outline: 2px solid rgb(var(--v-theme-warning)); outline-o
   padding: 4px 14px; border-radius: 999px; border: 1px solid var(--c-line);
   font-size: .85rem; font-weight: 600; letter-spacing: .04em; color: #b9c2ce;
 }
-.chips button.on { background: var(--c-fg); color: rgb(var(--v-theme-background)); border-color: var(--c-fg); }
+.chips button.on { background: var(--c-fg); color: var(--k-bg); border-color: var(--c-fg); }
 
 /* チャート */
 .chart-box { position: relative; height: 190px; margin-top: 4px; }
