@@ -1,175 +1,297 @@
 <template>
-  <v-container class="pa-2" style="max-width: 600px;">
+  <v-container class="workout pa-4" style="max-width: 600px;">
+
+    <!-- ヘッダー -->
+    <div class="w-top">
+      <div>
+        <div class="w-date">{{ todayLabel }}</div>
+        <div class="w-title">今日のワークアウト</div>
+      </div>
+      <div class="w-vol">
+        <span class="num">{{ totalVolume.toLocaleString() }}</span>
+        <small>総挙上量 kg</small>
+      </div>
+    </div>
 
     <!-- インターバルタイマー -->
-    <v-card class="mb-3 timer-card" :class="{ 'flash': isFlashing }" rounded="lg">
-      <v-card-text class="pa-3">
-        <v-row align="center">
-          <v-col>
-            <div class="text-h4 font-weight-bold text-center" :class="timerColor">
-              {{ formattedTime }}
-            </div>
-            <div class="text-caption text-center text-medium-emphasis">インターバル</div>
-          </v-col>
-          <v-col cols="auto">
-            <v-btn-group density="compact" variant="outlined">
-              <v-btn size="small" @click="setTimer(90)">90s</v-btn>
-              <v-btn size="small" @click="setTimer(180)">3m</v-btn>
-            </v-btn-group>
-          </v-col>
-          <v-col cols="auto">
-            <v-btn
-              :icon="timerRunning ? 'mdi-pause' : 'mdi-play'"
-              :color="timerRunning ? 'warning' : 'primary'"
-              variant="flat"
-              size="small"
-              @click="toggleTimer"
-            />
-            <v-btn icon="mdi-stop" variant="text" size="small" @click="resetTimer" class="ml-1" />
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
+    <section class="w-timer" :class="{ flash: isFlashing }">
+      <div class="ring" :class="{ warn: timerRunning && timerRemaining <= 10 }">
+        <svg viewBox="0 0 120 120">
+          <circle class="trk" cx="60" cy="60" r="52" />
+          <circle
+            class="prog"
+            cx="60" cy="60" r="52"
+            :stroke-dasharray="RING_LEN"
+            :stroke-dashoffset="ringOffset"
+          />
+        </svg>
+        <div class="ring-in">
+          <span class="num">{{ formattedTime }}</span>
+          <small>{{ timerLabel }}</small>
+        </div>
+      </div>
+      <div class="t-ctl">
+        <div class="t-chips">
+          <button
+            v-for="sec in TIMER_PRESETS"
+            :key="sec"
+            class="num"
+            :class="{ on: timerSeconds === sec }"
+            @click="setTimer(sec)"
+          >{{ sec < 120 ? `${sec}s` : `${sec / 60}m` }}</button>
+        </div>
+        <div class="t-btns">
+          <button class="play" :class="{ run: timerRunning }" @click="toggleTimer">
+            <v-icon size="20">{{ timerRunning ? 'mdi-pause' : 'mdi-play' }}</v-icon>
+            {{ timerRunning ? '一時停止' : 'スタート' }}
+          </button>
+          <button class="rst" aria-label="リセット" @click="resetTimer">
+            <v-icon size="20">mdi-restore</v-icon>
+          </button>
+        </div>
+      </div>
+    </section>
 
-    <!-- 種目選択 -->
-    <v-card class="mb-3" rounded="lg">
-      <v-card-text>
-        <v-row dense>
-          <v-col cols="6">
-            <v-select
-              v-model="filterPart"
-              :items="['すべて', ...PARTS]"
-              label="部位"
-              density="compact"
-              variant="outlined"
-              hide-details
-            />
-          </v-col>
-          <v-col cols="6">
-            <v-select
-              v-model="filterEquipment"
-              :items="['すべて', ...EQUIPMENTS]"
-              label="器具"
-              density="compact"
-              variant="outlined"
-              hide-details
-            />
-          </v-col>
-        </v-row>
-        <v-autocomplete
-          v-model="selectedExercise"
-          :items="filteredExercises"
-          item-title="name"
-          item-value="id"
-          label="種目を選択"
-          variant="outlined"
-          density="compact"
-          class="mt-2"
-          hide-details
-          return-object
-        />
-      </v-card-text>
-    </v-card>
+    <!-- 部位フィルター + 検索 -->
+    <div class="w-parts">
+      <button
+        v-for="p in partOptions"
+        :key="p"
+        :class="{ on: filterPart === p }"
+        @click="filterPart = p"
+      >{{ p }}</button>
+      <button class="search" aria-label="種目を検索" @click="searchOpen = true">
+        <v-icon size="18">mdi-magnify</v-icon>
+      </button>
+    </div>
 
-    <!-- 重量・回数入力 -->
-    <v-card class="mb-3" rounded="lg">
-      <v-card-text>
-        <v-row dense>
-          <v-col cols="6">
-            <v-text-field
-              v-model.number="inputWeight"
-              label="重量 (kg)"
-              type="number"
-              step="2.5"
-              variant="outlined"
-              density="compact"
-              :placeholder="lastRecord ? String(lastRecord.weight) : ''"
-              :hint="lastRecord ? `前回: ${lastRecord.weight}kg` : ''"
-              persistent-hint
-            />
-          </v-col>
-          <v-col cols="6">
-            <v-text-field
-              v-model.number="inputReps"
-              label="回数 (reps)"
-              type="number"
-              variant="outlined"
-              density="compact"
-              :placeholder="lastRecord ? String(lastRecord.reps) : ''"
-              :hint="lastRecord ? `前回: ${lastRecord.reps}reps` : ''"
-              persistent-hint
-            />
-          </v-col>
-        </v-row>
-        <v-btn
-          block
-          color="primary"
-          class="mt-3"
-          :disabled="!selectedExercise || !inputWeight || !inputReps"
-          :loading="adding"
-          @click="addSet"
-        >
-          <v-icon start>mdi-plus</v-icon>
-          セット追加
-        </v-btn>
-      </v-card-text>
-    </v-card>
+    <!-- 種目カード -->
+    <div ref="exListEl" class="w-exs">
+      <button
+        v-for="ex in filteredExercises"
+        :key="ex.id"
+        class="ex-card"
+        :class="{ on: selectedExercise?.id === ex.id }"
+        :data-id="ex.id"
+        @click="selectExercise(ex)"
+      >
+        <b>{{ ex.name }}</b>
+        <span v-if="prevByExercise[ex.id]">
+          前回 {{ fmtW(prevByExercise[ex.id].weight) }}kg × {{ prevByExercise[ex.id].reps }}
+        </span>
+        <span v-else>{{ ex.part }}・{{ ex.equipment }}</span>
+      </button>
+      <div v-if="filteredExercises.length === 0" class="ex-empty">
+        種目がありません。「種目」タブから登録してください
+      </div>
+    </div>
 
-    <!-- 今日の記録一覧 -->
-    <v-card v-if="todaySets.length > 0" rounded="lg">
-      <v-card-title class="text-body-1">本日の記録</v-card-title>
-      <v-list density="compact">
-        <v-list-item
-          v-for="(log, i) in todaySets"
-          :key="log.id"
-          :subtitle="`${log.weight}kg × ${log.reps}reps`"
-        >
-          <template #title>
-            <span class="text-body-2 font-weight-medium">
-              Set {{ log.set_number }} — {{ log.exercise?.name }}
-            </span>
-          </template>
-          <template #append>
-            <v-btn icon="mdi-delete-outline" size="small" variant="text" color="error" @click="deleteSet(log.id, i)" />
-          </template>
-        </v-list-item>
-      </v-list>
-    </v-card>
+    <!-- 重量・回数 -->
+    <div class="w-steps">
+      <div class="step">
+        <label for="w-weight">重量 kg</label>
+        <div class="row">
+          <button aria-label="重量を減らす" @click="bumpWeight(-WEIGHT_STEP)"><v-icon>mdi-minus</v-icon></button>
+          <input
+            id="w-weight"
+            v-model.number="inputWeight"
+            class="num"
+            type="number"
+            inputmode="decimal"
+            step="0.5"
+            min="0"
+          />
+          <button aria-label="重量を増やす" @click="bumpWeight(WEIGHT_STEP)"><v-icon>mdi-plus</v-icon></button>
+        </div>
+        <span class="prev">{{ lastRecord ? `前回 ${fmtW(lastRecord.weight)}kg` : '前回 —' }}</span>
+      </div>
+      <div class="step">
+        <label for="w-reps">回数</label>
+        <div class="row">
+          <button aria-label="回数を減らす" @click="bumpReps(-1)"><v-icon>mdi-minus</v-icon></button>
+          <input
+            id="w-reps"
+            v-model.number="inputReps"
+            class="num"
+            type="number"
+            inputmode="numeric"
+            min="1"
+          />
+          <button aria-label="回数を増やす" @click="bumpReps(1)"><v-icon>mdi-plus</v-icon></button>
+        </div>
+        <span class="prev">{{ lastRecord ? `前回 ${lastRecord.reps}回` : '前回 —' }}</span>
+      </div>
+    </div>
+
+    <v-btn
+      block
+      color="primary"
+      height="52"
+      rounded="lg"
+      class="w-rec"
+      :disabled="!selectedExercise || !inputWeight || !inputReps"
+      :loading="adding"
+      @click="addSet"
+    >
+      <v-icon start>mdi-check</v-icon>
+      {{ selectedExercise ? `${selectedExercise.name} を記録` : '種目を選んでください' }}
+    </v-btn>
+
+    <!-- 本日の記録 -->
+    <div class="w-sec">本日の記録</div>
+    <div v-if="groupedSets.length === 0" class="w-empty">まだ記録がありません</div>
+    <div class="w-log">
+      <div v-for="g in groupedSets" :key="g.exerciseId" class="grp">
+        <b>{{ g.name }}</b>
+        <div class="pills">
+          <v-menu v-for="log in g.sets" :key="log.id" location="top">
+            <template #activator="{ props }">
+              <button v-bind="props" class="pill num" :class="{ new: log.id === lastAddedId }">
+                {{ fmtW(log.weight) }}×{{ log.reps }}
+              </button>
+            </template>
+            <v-list density="compact">
+              <v-list-item
+                prepend-icon="mdi-delete-outline"
+                base-color="error"
+                :title="`${log.set_number}セット目 ${fmtW(log.weight)}kg×${log.reps} を削除`"
+                @click="deleteSet(log.id)"
+              />
+            </v-list>
+          </v-menu>
+        </div>
+      </div>
+    </div>
+
+    <!-- 種目検索 -->
+    <v-dialog v-model="searchOpen" max-width="480">
+      <v-card rounded="lg">
+        <v-card-text>
+          <v-autocomplete
+            :items="exercises"
+            item-title="name"
+            item-value="id"
+            label="種目を検索"
+            variant="outlined"
+            density="compact"
+            hide-details
+            autofocus
+            return-object
+            @update:model-value="onSearchSelect"
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props" :subtitle="`${item.raw.part}・${item.raw.equipment}`" />
+            </template>
+          </v-autocomplete>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
     <v-snackbar v-model="snackbar" :timeout="snackbarColor === 'error' ? 6000 : 2000" :color="snackbarColor">{{ snackbarText }}</v-snackbar>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
 import { toLocalDateStr } from '@/lib/date'
 import type { ExerciseMaster, WorkoutLog } from '@/types'
-import { PARTS, EQUIPMENTS } from '@/types'
+import { PARTS } from '@/types'
 
 const { user } = useAuth()
+
+const TIMER_PRESETS = [60, 90, 180]
+const WEIGHT_STEP = 2.5
+const RING_LEN = 2 * Math.PI * 52
 
 const exercises = ref<ExerciseMaster[]>([])
 const selectedExercise = ref<ExerciseMaster | null>(null)
 const filterPart = ref('すべて')
-const filterEquipment = ref('すべて')
 const inputWeight = ref<number | null>(null)
 const inputReps = ref<number | null>(null)
 const todaySets = ref<WorkoutLog[]>([])
-const lastRecord = ref<WorkoutLog | null>(null)
+/** 種目ごとの前回（今日より前で最新の日の最終セット） */
+const prevByExercise = ref<Record<string, WorkoutLog>>({})
+const lastAddedId = ref<number | null>(null)
+const searchOpen = ref(false)
+const exListEl = ref<HTMLElement | null>(null)
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref<'success' | 'error'>('success')
 const adding = ref(false)
 
-const filteredExercises = computed(() =>
-  exercises.value.filter((e) => {
-    if (filterPart.value !== 'すべて' && e.part !== filterPart.value) return false
-    if (filterEquipment.value !== 'すべて' && e.equipment !== filterEquipment.value) return false
-    return true
-  })
+const lastRecord = computed(() =>
+  selectedExercise.value ? prevByExercise.value[selectedExercise.value.id] ?? null : null
 )
+
+const todayLabel = computed(() =>
+  new Date().toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })
+)
+
+const totalVolume = computed(() =>
+  Math.round(todaySets.value.reduce((sum, s) => sum + s.weight * s.reps, 0))
+)
+
+// 登録済みの種目にある部位だけをチップに出す（並びは PARTS 順）
+const partOptions = computed(() => {
+  const used = new Set(exercises.value.map((e) => e.part))
+  return ['すべて', ...PARTS.filter((p) => used.has(p))]
+})
+
+const filteredExercises = computed(() =>
+  exercises.value.filter((e) => filterPart.value === 'すべて' || e.part === filterPart.value)
+)
+
+// 本日の記録を種目ごとにまとめる（最初に記録した順）
+const groupedSets = computed(() => {
+  const map = new Map<string, { exerciseId: string; name: string; sets: WorkoutLog[] }>()
+  for (const log of todaySets.value) {
+    let g = map.get(log.exercise_id)
+    if (!g) {
+      const name = log.exercise?.name ?? exercises.value.find((e) => e.id === log.exercise_id)?.name ?? '不明な種目'
+      g = { exerciseId: log.exercise_id, name, sets: [] }
+      map.set(log.exercise_id, g)
+    }
+    g.sets.push(log)
+  }
+  return [...map.values()]
+})
+
+function fmtW(w: number) {
+  return Number.isInteger(w) ? String(w) : String(Math.round(w * 100) / 100)
+}
+
+function selectExercise(ex: ExerciseMaster) {
+  selectedExercise.value = ex
+  // 今日すでにやっていればその最終セット、なければ前回値を初期値にする
+  const todayLast = [...todaySets.value].reverse().find((s) => s.exercise_id === ex.id)
+  const base = todayLast ?? prevByExercise.value[ex.id]
+  if (base) {
+    inputWeight.value = base.weight
+    inputReps.value = base.reps
+  }
+}
+
+function onSearchSelect(ex: ExerciseMaster | null) {
+  if (!ex) return
+  searchOpen.value = false
+  if (filterPart.value !== 'すべて' && filterPart.value !== ex.part) filterPart.value = 'すべて'
+  selectExercise(ex)
+  nextTick(() => {
+    exListEl.value
+      ?.querySelector<HTMLElement>(`[data-id="${ex.id}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  })
+}
+
+function bumpWeight(delta: number) {
+  inputWeight.value = Math.max(0, Math.round(((inputWeight.value ?? 0) + delta) * 100) / 100)
+}
+
+function bumpReps(delta: number) {
+  inputReps.value = Math.max(1, (inputReps.value ?? 0) + delta)
+}
 
 // タイマー (バックグラウンド対応: 絶対タイムスタンプ方式)
 const timerSeconds = ref(90)
@@ -188,9 +310,14 @@ const formattedTime = computed(() => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 })
 
-const timerColor = computed(() => {
-  if (timerRemaining.value <= 10 && timerRunning.value) return 'text-error'
-  return ''
+const timerLabel = computed(() => {
+  if (timerRunning.value) return '休憩中'
+  return timerRemaining.value === 0 ? '休憩終了' : '待機中'
+})
+
+const ringOffset = computed(() => {
+  const ratio = timerSeconds.value > 0 ? Math.min(1, timerRemaining.value / timerSeconds.value) : 0
+  return RING_LEN * (1 - ratio)
 })
 
 function tick() {
@@ -237,6 +364,7 @@ function toggleTimer() {
     timerEndAt = null
     localStorage.removeItem(LS_END_KEY)
   } else {
+    if (timerRemaining.value <= 0) timerRemaining.value = timerSeconds.value
     startTimer()
   }
 }
@@ -289,23 +417,6 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
-// 種目が変わったら前回値を取得
-watch(selectedExercise, async (ex) => {
-  if (!ex) { lastRecord.value = null; return }
-  const today = toLocalDateStr()
-  const { data } = await supabase
-    .from('workout_logs')
-    .select('*')
-    .eq('user_id', user.value!.id)
-    .eq('exercise_id', ex.id)
-    .lt('date', today)
-    .order('date', { ascending: false })
-    .order('set_number', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  lastRecord.value = data
-})
-
 async function loadExercises() {
   const { data } = await supabase
     .from('exercise_masters')
@@ -322,8 +433,26 @@ async function loadTodaySets() {
     .select('*, exercise:exercise_masters(name)')
     .eq('user_id', user.value!.id)
     .eq('date', today)
-    .order('set_number')
+    .order('created_at')
   todaySets.value = (data as WorkoutLog[]) ?? []
+}
+
+// 種目ごとの前回値を一括取得（新しい順に並べ、種目ごとに最初の1件を採用）
+async function loadPrevRecords() {
+  const today = toLocalDateStr()
+  const { data } = await supabase
+    .from('workout_logs')
+    .select('*')
+    .eq('user_id', user.value!.id)
+    .lt('date', today)
+    .order('date', { ascending: false })
+    .order('set_number', { ascending: false })
+    .limit(1000)
+  const map: Record<string, WorkoutLog> = {}
+  for (const log of (data as WorkoutLog[]) ?? []) {
+    if (!map[log.exercise_id]) map[log.exercise_id] = log
+  }
+  prevByExercise.value = map
 }
 
 async function addSet() {
@@ -349,7 +478,8 @@ async function addSet() {
 
     // 保存結果をそのまま一覧に反映（再取得を待たない）
     todaySets.value.push(data as WorkoutLog)
-    showSnackbar('セットを記録しました', 'success')
+    lastAddedId.value = (data as WorkoutLog).id
+    showSnackbar(`${selectedExercise.value.name} ${fmtW(inputWeight.value)}kg×${inputReps.value} を記録しました`, 'success')
 
     // インターバル中でも、新しいセットの記録でタイマーを頭からかけ直す
     stopTick()
@@ -369,14 +499,20 @@ function showSnackbar(text: string, color: 'success' | 'error') {
   snackbar.value = true
 }
 
-async function deleteSet(id: number, index: number) {
-  await supabase.from('workout_logs').delete().eq('id', id)
-  todaySets.value.splice(index, 1)
+async function deleteSet(id: number) {
+  const { error } = await supabase.from('workout_logs').delete().eq('id', id)
+  if (error) {
+    console.error('[deleteSet] failed', error)
+    showSnackbar(`削除に失敗しました: ${error.message}`, 'error')
+    return
+  }
+  todaySets.value = todaySets.value.filter((s) => s.id !== id)
 }
 
 onMounted(() => {
   loadExercises()
   loadTodaySets()
+  loadPrevRecords()
   document.addEventListener('visibilitychange', handleVisibilityChange)
 
   // ページ再読み込み時にタイマー状態を復元
@@ -398,10 +534,145 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.timer-card {
-  transition: background-color 0.1s;
+.workout {
+  --c-surface: rgb(var(--v-theme-surface));
+  --c-raised: rgb(var(--v-theme-surface-variant));
+  --c-primary: rgb(var(--v-theme-primary));
+  --c-warn: rgb(var(--v-theme-warning));
+  --c-fg: rgb(var(--v-theme-on-background));
+  --c-muted: #8b95a3;
+  --c-line: #2f3540;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-.flash {
-  background-color: #1976D2 !important;
+.num {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ヘッダー */
+.w-top { display: flex; justify-content: space-between; align-items: flex-end; }
+.w-date { font-size: .75rem; color: var(--c-muted); }
+.w-title { font-size: 1.15rem; font-weight: 700; }
+.w-vol { text-align: right; line-height: 1.1; }
+.w-vol .num { font-size: 1.5rem; font-weight: 700; }
+.w-vol small { display: block; font-size: .66rem; color: var(--c-muted); }
+
+/* タイマー */
+.w-timer {
+  background: var(--c-surface);
+  border-radius: 20px;
+  padding: 14px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  transition: background-color .1s;
+}
+.w-timer.flash { background: rgba(76, 141, 255, .35); }
+.ring { position: relative; width: 104px; height: 104px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 9; }
+.ring .trk { stroke: var(--c-line); }
+.ring .prog { stroke: var(--c-primary); stroke-linecap: round; transition: stroke-dashoffset .4s linear; }
+.ring.warn .prog { stroke: var(--c-warn); }
+.ring-in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-in .num { font-size: 1.75rem; font-weight: 600; line-height: 1; }
+.ring-in small { font-size: .62rem; color: var(--c-muted); }
+.t-ctl { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+.t-chips { display: flex; gap: 6px; }
+.t-chips button {
+  flex: 1; padding: 5px 0; border-radius: 8px;
+  background: var(--c-raised); font-weight: 600; font-size: .95rem; color: #b9c2ce;
+}
+.t-chips button.on { background: rgba(76, 141, 255, .18); color: #8fb8ff; }
+.t-btns { display: flex; gap: 8px; }
+.t-btns .play {
+  flex: 1; height: 40px; border-radius: 12px; background: var(--c-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .85rem; font-weight: 700;
+}
+.t-btns .play.run { background: var(--c-line); color: var(--c-fg); }
+.t-btns .rst {
+  width: 40px; height: 40px; border-radius: 12px; background: var(--c-raised);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* 部位チップ */
+.w-parts { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; align-items: center; }
+.w-parts button {
+  padding: 4px 12px; border-radius: 999px; border: 1px solid var(--c-line);
+  font-size: .78rem; color: #b9c2ce; white-space: nowrap; flex: none;
+}
+.w-parts button.on { background: var(--c-fg); color: rgb(var(--v-theme-background)); border-color: var(--c-fg); }
+.w-parts .search { margin-left: auto; padding: 4px 8px; display: flex; align-items: center; }
+
+/* 種目カード */
+.w-exs {
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  margin: 0 -16px; padding: 0 16px;
+}
+.ex-card {
+  flex: none; width: 138px; text-align: left; background: var(--c-surface);
+  border: 1.5px solid transparent; border-radius: 14px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ex-card.on { border-color: var(--c-primary); background: #1a2433; }
+.ex-card b { font-size: .84rem; line-height: 1.3; font-weight: 700; }
+.ex-card span { font-size: .7rem; color: var(--c-muted); }
+.ex-empty { font-size: .8rem; color: var(--c-muted); padding: 8px 0; }
+
+/* ステッパー */
+.w-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.step {
+  background: var(--c-surface); border-radius: 16px; padding: 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.step label { font-size: .7rem; color: var(--c-muted); }
+.step .row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 4px; }
+.step .row button {
+  width: 36px; height: 36px; border-radius: 10px; background: var(--c-raised);
+  display: flex; align-items: center; justify-content: center; flex: none;
+}
+.step input {
+  width: 100%; min-width: 0; text-align: center; background: transparent; border: 0;
+  color: var(--c-fg); font-size: 2rem; font-weight: 600; line-height: 1; padding: 0;
+  -moz-appearance: textfield; appearance: textfield;
+}
+.step input:focus { outline: none; border-bottom: 2px solid var(--c-primary); }
+.step input::-webkit-outer-spin-button,
+.step input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.step .prev { font-size: .66rem; color: #6f7988; }
+
+.w-rec { font-weight: 700; letter-spacing: 0; }
+
+/* 本日の記録 */
+.w-sec { font-size: .72rem; color: var(--c-muted); letter-spacing: .08em; margin-top: 4px; }
+.w-empty { font-size: .8rem; color: var(--c-muted); }
+.w-log { display: flex; flex-direction: column; gap: 8px; }
+.grp {
+  background: var(--c-surface); border-radius: 14px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.grp b { font-size: .84rem; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill {
+  background: var(--c-raised); border-radius: 8px; padding: 2px 9px;
+  font-size: .95rem; font-weight: 600; color: #cfd6df;
+}
+@keyframes pop { from { background: rgba(76, 141, 255, .45); } to { background: var(--c-raised); } }
+.pill.new { animation: pop 1.4s ease-out; }
+
+button:focus-visible, input:focus-visible { outline: 2px solid var(--c-warn); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .pill.new { animation: none; }
+  .ring .prog { transition: none; }
 }
 </style>
