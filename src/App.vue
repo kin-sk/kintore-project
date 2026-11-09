@@ -1,9 +1,12 @@
 <template>
   <v-app>
-    <v-app-bar v-if="isAuthenticated" color="primary" dark>
-      <v-toolbar-title>筋トレ記録</v-toolbar-title>
+    <v-app-bar v-if="isAuthenticated" color="background" flat border="b">
+      <router-link to="/" class="app-logo ml-4" aria-label="KINTORE ホーム">
+        <span class="app-logo-mark"><v-icon size="16">mdi-dumbbell</v-icon></span>
+        KINTORE
+      </router-link>
       <v-spacer />
-      <v-btn icon @click="handleLogout">
+      <v-btn icon variant="text" color="medium-emphasis" aria-label="ログアウト" @click="handleLogout">
         <v-icon>mdi-logout</v-icon>
       </v-btn>
     </v-app-bar>
@@ -12,7 +15,7 @@
       <router-view />
     </v-main>
 
-    <v-bottom-navigation v-if="isAuthenticated" :elevation="8" grow color="primary" :height="64">
+    <v-bottom-navigation v-if="isAuthenticated" :elevation="0" border="t" bg-color="background" grow color="primary" :height="64">
       <v-btn to="/" value="home">
         <v-icon>mdi-calendar</v-icon>
         <span>ホーム</span>
@@ -45,3 +48,29 @@ async function handleLogout() {
   router.push('/auth')
 }
 </script>
+
+<style scoped>
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-style: italic;
+  font-size: 1.4rem;
+  letter-spacing: .06em;
+  color: rgb(var(--v-theme-on-background));
+  text-decoration: none;
+}
+.app-logo-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgb(var(--v-theme-primary));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+}
+</style>
