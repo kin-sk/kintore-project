@@ -88,7 +88,7 @@
           <div v-for="g in selectedDayWorkoutGroups" :key="g.exerciseName" class="det-ex">
             <span class="n">{{ g.exerciseName }}</span>
             <div class="pills">
-              <span v-for="log in g.logs" :key="log.id" class="num">{{ fmtW(log.weight) }}×{{ log.reps }}</span>
+              <span v-for="log in g.logs" :key="log.id" class="num">{{ fmtW(log.weight) }}<small>kg</small> × {{ log.reps }}</span>
             </div>
           </div>
           <span v-if="selectedDayWorkoutGroups.length === 0" class="lbl">トレーニングの記録はありません</span>
@@ -386,15 +386,15 @@ onMounted(() => {
 
 <style scoped>
 .home {
-  --c-surface: rgb(var(--v-theme-surface));
-  --c-raised: rgb(var(--v-theme-surface-variant));
-  --c-primary: rgb(var(--v-theme-primary));
-  --c-primary-soft: rgba(76, 141, 255, .18);
-  --c-primary-text: #8fb8ff;
-  --c-fg: rgb(var(--v-theme-on-background));
-  --c-muted: #8b95a3;
-  --c-ok: #4fd19b;
-  --c-up: #ff8a65;
+  --c-surface: var(--k-surface);
+  --c-raised: var(--k-raised);
+  --c-primary: var(--k-primary);
+  --c-primary-soft: var(--k-primary-soft);
+  --c-primary-text: var(--k-primary-text);
+  --c-fg: var(--k-fg);
+  --c-muted: var(--k-muted);
+  --c-ok: var(--k-ok);
+  --c-up: var(--k-up);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -404,7 +404,7 @@ button {
   font: inherit; color: inherit; border: 0; background: none; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-button:focus-visible, input:focus-visible { outline: 2px solid rgb(var(--v-theme-warning)); outline-offset: 2px; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--k-warn); outline-offset: 2px; }
 .lbl { font-size: .72rem; color: var(--c-muted); letter-spacing: .04em; }
 .down { color: var(--c-ok); }
 .up { color: var(--c-up); }
@@ -458,7 +458,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid rgb(var(--v-theme
 .det-ex { display: flex; flex-direction: column; gap: 5px; }
 .det-ex .n { font-size: .82rem; }
 .pills { display: flex; flex-wrap: wrap; gap: 5px; }
-.pills span { background: var(--c-raised); border-radius: 7px; padding: 1px 8px; font-weight: 600; font-size: .95rem; color: #cfd6df; }
+.pills span { background: var(--c-raised); border-radius: 8px; padding: 3px 10px; font-weight: 600; font-size: 1.1rem; color: var(--c-fg); line-height: 1.3; }
+.pills small { font-size: .72rem; color: var(--c-muted); margin-left: 1px; }
 
 /* ボトムシート */
 .sheet { padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
