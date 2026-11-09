@@ -1,0 +1,22 @@
+/*
+ * KINTORE の配色。
+ * Vuetify テーマの値（surface-variant など）は用途が違い明るいグレーになることがあるため、
+ * 自前で組んだ部品はこの変数だけを使う。
+ */
+:root {
+  --k-bg: #13161b;
+  --k-surface: #1c2027;      /* カード */
+  --k-raised: #2a303a;       /* カードの中のボタン・ピル */
+  --k-line: #343b46;         /* 枠線・区切り線 */
+  --k-fg: #e8ecf1;           /* 本文 */
+  --k-fg-sub: #c3cad4;       /* ピルなどの文字 */
+  --k-muted: #8b95a3;        /* 補足 */
+  --k-primary: #4c8dff;
+  --k-primary-soft: rgba(76, 141, 255, .18);
+  --k-primary-text: #8fb8ff;
+  --k-primary-deep: #1a2433;
+  --k-warn: #ffb547;
+  --k-ok: #4fd19b;
+  --k-up: #ff8a65;
+  --k-font-num: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+}
