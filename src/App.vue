@@ -59,14 +59,14 @@ async function handleLogout() {
   font-style: italic;
   font-size: 1.4rem;
   letter-spacing: .06em;
-  color: rgb(var(--v-theme-on-background));
+  color: var(--k-fg);
   text-decoration: none;
 }
 .app-logo-mark {
   width: 24px;
   height: 24px;
   border-radius: 7px;
-  background: rgb(var(--v-theme-primary));
+  background: var(--k-primary);
   color: #fff;
   display: flex;
   align-items: center;
