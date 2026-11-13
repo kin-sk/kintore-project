@@ -199,6 +199,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
 import { toLocalDateStr } from '@/lib/date'
+import { scheduleRestEnd, cancelRestEnd, vibrateRestEnd, tapFeedback } from '@/lib/native'
 import type { ExerciseMaster, WorkoutLog } from '@/types'
 import { PARTS } from '@/types'
 
@@ -304,7 +305,6 @@ const isFlashing = ref(false)
 
 let timerInterval: ReturnType<typeof setInterval> | null = null
 let timerEndAt: number | null = null
-let notifTimeout: ReturnType<typeof setTimeout> | null = null
 const LS_END_KEY = 'kintore_timer_end_at'
 
 const formattedTime = computed(() => {
@@ -338,9 +338,9 @@ function tick() {
   }
 }
 
+// 画面表示の更新だけを止める（予約済みの通知は残す。画面を離れてもタイマーは続く）
 function stopTick() {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null }
-  if (notifTimeout) { clearTimeout(notifTimeout); notifTimeout = null }
 }
 
 function startTimer() {
@@ -348,11 +348,12 @@ function startTimer() {
   localStorage.setItem(LS_END_KEY, String(timerEndAt))
   timerRunning.value = true
   timerInterval = setInterval(tick, 500)
-  scheduleNotification(timerRemaining.value)
+  scheduleRestEnd(timerEndAt)
 }
 
 function setTimer(secs: number) {
   stopTick()
+  cancelRestEnd()
   timerSeconds.value = secs
   timerRemaining.value = secs
   timerRunning.value = false
@@ -363,6 +364,7 @@ function setTimer(secs: number) {
 function toggleTimer() {
   if (timerRunning.value) {
     stopTick()
+    cancelRestEnd()
     timerRunning.value = false
     timerEndAt = null
     localStorage.removeItem(LS_END_KEY)
@@ -374,6 +376,7 @@ function toggleTimer() {
 
 function resetTimer() {
   stopTick()
+  cancelRestEnd()
   timerRunning.value = false
   timerEndAt = null
   localStorage.removeItem(LS_END_KEY)
@@ -381,27 +384,12 @@ function resetTimer() {
 }
 
 function onTimerEnd() {
-  if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 300])
+  vibrateRestEnd()
   let count = 0
   const flash = setInterval(() => {
     isFlashing.value = !isFlashing.value
     if (++count >= 6) { clearInterval(flash); isFlashing.value = false }
   }, 200)
-}
-
-async function scheduleNotification(seconds: number) {
-  if (!('Notification' in window)) return
-  if (Notification.permission === 'default') {
-    await Notification.requestPermission()
-  }
-  if (Notification.permission !== 'granted') return
-  notifTimeout = setTimeout(() => {
-    if (!timerRunning.value) return
-    new Notification('休憩終了！', {
-      body: '次のセットを始めましょう 💪',
-      icon: '/pwa-192x192.png',
-    })
-  }, seconds * 1000)
 }
 
 function handleVisibilityChange() {
@@ -482,6 +470,7 @@ async function addSet() {
     // 保存結果をそのまま一覧に反映（再取得を待たない）
     todaySets.value.push(data as WorkoutLog)
     lastAddedId.value = (data as WorkoutLog).id
+    tapFeedback()
     showSnackbar(`${selectedExercise.value.name} ${fmtW(inputWeight.value)}kg×${inputReps.value} を記録しました`, 'success')
 
     // インターバル中でも、新しいセットの記録でタイマーを頭からかけ直す
