@@ -1,0 +1,14 @@
+{
+	"appId": "jp.kintore.app",
+	"appName": "KINTORE",
+	"webDir": "dist",
+	"backgroundColor": "#13161b",
+	"android": {
+		"adjustMarginsForEdgeToEdge": "auto"
+	},
+	"plugins": {
+		"LocalNotifications": {
+			"iconColor": "#4C8DFF"
+		}
+	}
+}
