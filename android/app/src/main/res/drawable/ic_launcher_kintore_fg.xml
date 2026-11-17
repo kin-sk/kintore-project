@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KINTORE ランチャーアイコン（前景）: 横向きバーベル。108dp キャンバス、中央 66dp の安全領域に収める -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- バー -->
+    <path android:fillColor="#C3CAD4" android:pathData="M29.25,51.25h49.5v5.5h-49.5z" />
+    <!-- 内側プレート -->
+    <path android:fillColor="#4C8DFF" android:pathData="M34.75,37.5h6.875v33h-6.875z" />
+    <path android:fillColor="#4C8DFF" android:pathData="M66.375,37.5h6.875v33h-6.875z" />
+    <!-- 外側プレート -->
+    <path android:fillColor="#8FB8FF" android:pathData="M28.15,43h5.5v22h-5.5z" />
+    <path android:fillColor="#8FB8FF" android:pathData="M74.35,43h5.5v22h-5.5z" />
+</vector>
