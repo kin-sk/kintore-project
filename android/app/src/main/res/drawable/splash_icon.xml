@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 起動時のウィンドウ背景（Android 11 以前の起動画面にも使われる） -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/kintore_bg" />
-    <item android:drawable="@drawable/splash_icon" android:gravity="center" />
-</layer-list>
+<!-- Android 12+ の起動画面アイコン。288dp キャンバス（中央 192dp の円に収める）。
+     角丸タイル 96dp + バーベル。Web 側の起動アニメ（index.html #intro）の初期状態と同じ見た目 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <!-- タイル（96dp, 角丸 26dp） -->
+    <path android:fillColor="#1C2027"
+        android:pathData="M122,96H166A26,26 0,0 1,192 122V166A26,26 0,0 1,166 192H122A26,26 0,0 1,96 166V122A26,26 0,0 1,122 96Z" />
+    <!-- バー -->
+    <path android:fillColor="#C3CAD4" android:pathData="M120,141.33h48v5.33h-48z" />
+    <!-- 内側プレート -->
+    <path android:fillColor="#4C8DFF" android:pathData="M125.33,128h6.67v32h-6.67z" />
+    <path android:fillColor="#4C8DFF" android:pathData="M156,128h6.67v32h-6.67z" />
+    <!-- 外側プレート -->
+    <path android:fillColor="#8FB8FF" android:pathData="M118.93,133.33h5.33v21.33h-5.33z" />
+    <path android:fillColor="#8FB8FF" android:pathData="M163.73,133.33h5.33v21.33h-5.33z" />
+</vector>
